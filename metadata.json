@@ -1,0 +1,6 @@
+{
+  "name": "Carbon Footprint Tracker",
+  "description": "Measure, track, and dynamically reduce your annual carbon footprint using personalized insights and an intelligent action assistant powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
