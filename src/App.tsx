@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getInitialState, saveState } from "./utils/storage";
 import { calculateBaseline, PRESET_DAILY_ACTIONS, CO2_GLOBAL_AVERAGES, PresetAction } from "./utils/carbonCalculations";
+import { calculateUpdatedStreak } from "./utils/streak";
 import { AppState, BaselineInput, DailyLogItem, RecommendationItem, ChatMessage, CarbonCategory } from "./types";
 import { 
   Leaf, 
@@ -68,56 +69,6 @@ export default function App() {
         baselineResult: updatedResult,
       };
     });
-  };
-
-  // Streak update calculation helper
-  const calculateUpdatedStreak = (
-    logDateStr: string,
-    currentStreak: number,
-    longestStreak: number,
-    lastActiveDateStr: string | null
-  ) => {
-    const todayStr = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    let newStreak = currentStreak;
-    let newLongest = longestStreak;
-
-    if (!lastActiveDateStr) {
-      newStreak = 1;
-    } else if (logDateStr === lastActiveDateStr) {
-      // already logged today, streak continues
-    } else if (logDateStr === yesterdayStr) {
-      if (lastActiveDateStr === todayStr) {
-        // already green today, keep current streak
-      } else {
-        newStreak += 1;
-      }
-    } else if (logDateStr === todayStr) {
-      if (lastActiveDateStr === yesterdayStr) {
-        newStreak += 1;
-      } else if (lastActiveDateStr !== todayStr) {
-        newStreak = 1;
-      }
-    } else {
-      // past logging
-      const diffTime = Math.abs(new Date(todayStr).getTime() - new Date(logDateStr).getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays > 1 && lastActiveDateStr !== yesterdayStr && lastActiveDateStr !== todayStr) {
-        newStreak = 1;
-      }
-    }
-
-    if (newStreak > newLongest) {
-      newLongest = newStreak;
-    }
-
-    return {
-      currentStreakCount: newStreak,
-      longestStreakCount: newLongest,
-      lastActiveDate: logDateStr,
-    };
   };
 
   // Social interactive groups handler
@@ -464,12 +415,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F0F7F4] text-[#1A2E22] font-sans antialiased p-4 md:p-8 flex flex-col justify-between">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:rounded-lg focus:font-bold"
+      >
+        Skip to main content
+      </a>
       
       {/* 1. Header Section */}
       <header className="max-w-7xl mx-auto w-full flex flex-col sm:flex-row justify-between items-center bg-white/70 backdrop-blur-md rounded-3xl p-5 md:p-6 mb-8 shadow-sm gap-4 border border-[#e1eded]">
         {/* Brand logo & name */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
+          <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-md" aria-hidden="true">
             <Leaf className="w-6 h-6 text-white animate-pulse" />
           </div>
           <div>
@@ -478,10 +435,15 @@ export default function App() {
           </div>
         </div>
 
-        {/* Global tab navigation mimicking high-fidelity design selection */}
-        <nav className="flex flex-wrap justify-center gap-1 bg-white/80 p-1.5 rounded-2xl border border-slate-100">
+        {/* Global tab navigation */}
+        <nav className="flex flex-wrap justify-center gap-1 bg-white/80 p-1.5 rounded-2xl border border-slate-100" aria-label="Main sections">
+          <div role="tablist" className="flex flex-wrap justify-center gap-1">
           <button 
+            type="button"
+            role="tab"
             id="tab-calculator"
+            aria-selected={selectedTab === "calculator"}
+            aria-controls="panel-calculator"
             onClick={() => setState(prev => ({ ...prev, selectedTab: "calculator" }))}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition ${selectedTab === "calculator" ? "bg-emerald-500 text-white shadow-sm" : "opacity-70 hover:opacity-100 text-emerald-950 font-semibold"}`}
           >
@@ -489,20 +451,28 @@ export default function App() {
           </button>
           
           <button 
+            type="button"
+            role="tab"
             id="tab-logs"
+            aria-selected={selectedTab === "logs"}
+            aria-controls="panel-logs"
             onClick={() => setState(prev => ({ ...prev, selectedTab: "logs" }))}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1 ${selectedTab === "logs" ? "bg-emerald-500 text-white shadow-sm" : "opacity-70 hover:opacity-100 text-emerald-950 font-semibold"}`}
           >
             Daily Green Logs
             {dailyLogs.length > 0 && (
-              <span className="w-5 h-5 bg-emerald-100 text-emerald-800 text-[10px] rounded-full flex items-center justify-center font-bold">
+              <span className="w-5 h-5 bg-emerald-100 text-emerald-800 text-[10px] rounded-full flex items-center justify-center font-bold" aria-label={`${dailyLogs.length} log entries`}>
                 {dailyLogs.length}
               </span>
             )}
           </button>
 
           <button 
+            type="button"
+            role="tab"
             id="tab-planner"
+            aria-selected={selectedTab === "planner"}
+            aria-controls="panel-planner"
             onClick={() => setState(prev => ({ ...prev, selectedTab: "planner" }))}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition ${selectedTab === "planner" ? "bg-emerald-500 text-white shadow-sm" : "opacity-70 hover:opacity-100 text-emerald-950 font-semibold"}`}
           >
@@ -510,31 +480,44 @@ export default function App() {
           </button>
 
           <button 
+            type="button"
+            role="tab"
             id="tab-progress"
+            aria-selected={selectedTab === "progress"}
+            aria-controls="panel-progress"
             onClick={() => setState(prev => ({ ...prev, selectedTab: "progress" }))}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5 ${selectedTab === "progress" ? "bg-emerald-500 text-white shadow-sm" : "opacity-70 hover:opacity-100 text-emerald-950 font-semibold"}`}
           >
-            <Award className="w-3.5 h-3.5" />
+            <Award className="w-3.5 h-3.5" aria-hidden="true" />
             Progress & Badges
           </button>
 
           <button 
+            type="button"
+            role="tab"
             id="tab-social"
+            aria-selected={selectedTab === "social"}
+            aria-controls="panel-social"
             onClick={() => setState(prev => ({ ...prev, selectedTab: "social" }))}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5 ${selectedTab === "social" ? "bg-emerald-500 text-white shadow-sm" : "opacity-70 hover:opacity-100 text-emerald-950 font-semibold"}`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-3.5 h-3.5" aria-hidden="true" />
             Social Hub
           </button>
 
           <button 
+            type="button"
+            role="tab"
             id="tab-assistant"
+            aria-selected={selectedTab === "assistant"}
+            aria-controls="panel-assistant"
             onClick={() => setState(prev => ({ ...prev, selectedTab: "assistant" }))}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5 ${selectedTab === "assistant" ? "bg-emerald-500 text-white shadow-sm" : "opacity-70 hover:opacity-100 text-emerald-950 font-semibold"}`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
             Eco Assist AI
           </button>
+          </div>
         </nav>
 
         {/* User Identity widget */}
@@ -549,28 +532,30 @@ export default function App() {
                 onChange={(e) => setUserName(e.target.value)}
                 onBlur={() => setIsEditingName(false)}
                 onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                aria-label="Edit your display name"
                 className="text-xs font-bold text-slate-800 max-w-[100px] border-b border-emerald-500 focus:outline-none"
                 autoFocus
               />
             ) : (
-              <p 
+              <button
+                type="button"
                 onClick={() => setIsEditingName(true)} 
                 className="font-bold text-emerald-950 text-sm hover:text-emerald-700 cursor-pointer flex items-center justify-end gap-1"
-                title="Click to edit name"
+                aria-label={`Edit display name: ${userName}`}
               >
                 {userName}
-              </p>
+              </button>
             )}
             <p className="text-xs font-semibold text-emerald-600 block">{userRank.title}</p>
           </div>
-          <div className={`w-11 h-11 ${userRank.bg} ${userRank.text} rounded-xl flex items-center justify-center font-black text-sm tracking-tight shadow-sm`}>
+          <div className={`w-11 h-11 ${userRank.bg} ${userRank.text} rounded-xl flex items-center justify-center font-black text-sm tracking-tight shadow-sm`} aria-hidden="true">
             {userName.substring(0,2).toUpperCase()}
           </div>
         </div>
       </header>
 
       {/* 2. Main Visual Canvas */}
-      <main className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 flex-1">
+      <main id="main-content" className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 flex-1">
         
         {/* LEFT COLUMN: Carbon Hero Dial & Quick Stats (Takes 5 cols of 12) */}
         <section className="lg:col-span-5 bg-emerald-500 rounded-[3rem] p-8 text-white flex flex-col justify-between shadow-xl shadow-emerald-950/10 min-h-[500px]">
@@ -578,13 +563,22 @@ export default function App() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs uppercase font-extrabold tracking-widest text-emerald-100/80">Active Performance Status</span>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600/40 rounded-full text-[10px] font-black uppercase text-emerald-100">
-                <Trophy className="w-3 h-3 text-amber-300" />
+                <Trophy className="w-3 h-3 text-amber-300" aria-hidden="true" />
                 {totalUserPoints} pts
               </div>
             </div>
             
             <h2 className="text-3xl font-black leading-tight mt-3">
-              Great job, <span className="underline decoration-wavy decoration-emerald-300 cursor-pointer" onClick={() => setIsEditingName(true)}>{userName.split(" ")[0]}</span>!<br/>
+              Great job,{" "}
+              <button
+                type="button"
+                onClick={() => setIsEditingName(true)}
+                className="underline decoration-wavy decoration-emerald-300 cursor-pointer"
+                aria-label={`Edit name: ${userName.split(" ")[0]}`}
+              >
+                {userName.split(" ")[0]}
+              </button>
+              !<br/>
               Let's shave tons of CO₂.
             </h2>
             <p className="text-emerald-50/90 text-sm mt-2 font-medium">
@@ -594,8 +588,12 @@ export default function App() {
 
           {/* DYNAMIC CIRCULAR CARBON DIAL */}
           <div className="flex flex-col items-center justify-center py-6">
-            <div className="relative w-52 h-52 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90">
+            <div
+              className="relative w-52 h-52 flex items-center justify-center"
+              role="img"
+              aria-label={`Net annual carbon footprint: ${(netAnnualFootprint / 1000).toFixed(2)} metric tonnes CO₂e per year`}
+            >
+              <svg className="w-full h-full -rotate-90" aria-hidden="true">
                 {/* Background path trail */}
                 <circle 
                   cx="104" 
@@ -622,14 +620,14 @@ export default function App() {
               
               {/* Inner dial data display */}
               <div className="absolute text-center">
-                <p className="text-5xl font-black tracking-tighter" id="net-carbon-metric">
+                <p className="text-5xl font-black tracking-tighter" id="net-carbon-metric" aria-hidden="true">
                   {(netAnnualFootprint / 1000).toFixed(2)}
                 </p>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mt-1">MT CO₂e / yr (Net)</p>
                 
                 {estimatedAnnualReductionsRate > 0 && (
                   <div className="mt-2 bg-emerald-600/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 text-[10px] font-bold text-emerald-100">
-                    <TrendingDown className="w-3 h-3 text-emerald-300" />
+                    <TrendingDown className="w-3 h-3 text-emerald-300" aria-hidden="true" />
                     -{estimatedAnnualReductionsRate} kg log savings
                   </div>
                 )}
@@ -647,22 +645,22 @@ export default function App() {
               
               <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold tracking-tight">
                 <div className="bg-emerald-700/30 p-2 rounded-xl border border-white/5">
-                  <Car className="w-4 h-4 mx-auto mb-1 text-emerald-200" />
+                  <Car className="w-4 h-4 mx-auto mb-1 text-emerald-200" aria-hidden="true" />
                   <span className="block text-slate-100">Transport</span>
                   <span className="text-xs font-extrabold text-white font-mono">{baselineResult.transportation}</span>
                 </div>
                 <div className="bg-emerald-700/30 p-2 rounded-xl border border-white/5">
-                  <Flame className="w-4 h-4 mx-auto mb-1 text-emerald-200" />
+                  <Flame className="w-4 h-4 mx-auto mb-1 text-emerald-200" aria-hidden="true" />
                   <span className="block text-slate-100">Energy</span>
                   <span className="text-xs font-extrabold text-white font-mono">{baselineResult.energy}</span>
                 </div>
                 <div className="bg-emerald-700/30 p-2 rounded-xl border border-white/5">
-                  <Utensils className="w-4 h-4 mx-auto mb-1 text-emerald-200" />
+                  <Utensils className="w-4 h-4 mx-auto mb-1 text-emerald-200" aria-hidden="true" />
                   <span className="block text-slate-100">Diet</span>
                   <span className="text-xs font-extrabold text-white font-mono">{baselineResult.diet}</span>
                 </div>
                 <div className="bg-emerald-700/30 p-2 rounded-xl border border-white/5">
-                  <Trash2 className="w-4 h-4 mx-auto mb-1 text-emerald-200" />
+                  <Trash2 className="w-4 h-4 mx-auto mb-1 text-emerald-200" aria-hidden="true" />
                   <span className="block text-slate-100">Waste</span>
                   <span className="text-xs font-extrabold text-white font-mono">{baselineResult.waste}</span>
                 </div>
@@ -681,7 +679,12 @@ export default function App() {
 
           {/* TAB 1: Baseline Carbon Footprint Calculator */}
           {selectedTab === "calculator" && (
-            <div id="stage-calculator" className="bg-white rounded-[3rem] p-6 md:p-8 shadow-sm border border-[#e1eded] flex-1 flex flex-col justify-between">
+            <div
+              id="panel-calculator"
+              role="tabpanel"
+              aria-labelledby="tab-calculator"
+              className="bg-white rounded-[3rem] p-6 md:p-8 shadow-sm border border-[#e1eded] flex-1 flex flex-col justify-between"
+            >
               <div>
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -707,7 +710,7 @@ export default function App() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Primary Vehicle type</label>
+                        <label htmlFor="input-vehicleType" className="block text-xs font-extrabold text-slate-500 mb-1.5">Primary Vehicle type</label>
                         <select
                           id="input-vehicleType"
                           value={baselineInput.vehicleType}
@@ -724,7 +727,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Annual Kilometers Driven (km)</label>
+                        <label htmlFor="input-vehicleMiles" className="block text-xs font-extrabold text-slate-500 mb-1.5">Annual Kilometers Driven (km)</label>
                         <input
                           id="input-vehicleMiles"
                           type="number"
@@ -738,7 +741,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Public Transit Travel (km/week)</label>
+                        <label htmlFor="input-weeklyTransit" className="block text-xs font-extrabold text-slate-500 mb-1.5">Public Transit Travel (km/week)</label>
                         <input
                           id="input-weeklyTransit"
                           type="number"
@@ -752,7 +755,7 @@ export default function App() {
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-[10px] font-extrabold text-slate-500 mb-1.5" title="Flights within India">Domestic Flights/Yr</label>
+                          <label htmlFor="input-shorthaul" className="block text-[10px] font-extrabold text-slate-500 mb-1.5" title="Flights within India">Domestic Flights/Yr</label>
                           <input
                             id="input-shorthaul"
                             type="number"
@@ -764,7 +767,7 @@ export default function App() {
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-extrabold text-slate-500 mb-1.5" title="Flights traveling abroad">International Flights/Yr</label>
+                          <label htmlFor="input-longhaul" className="block text-[10px] font-extrabold text-slate-500 mb-1.5" title="Flights traveling abroad">International Flights/Yr</label>
                           <input
                             id="input-longhaul"
                             type="number"
@@ -788,7 +791,7 @@ export default function App() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Monthly Electricity Bill (INR ₹)</label>
+                        <label htmlFor="input-electricityBill" className="block text-xs font-extrabold text-slate-500 mb-1.5">Monthly Electricity Bill (INR ₹)</label>
                         <input
                           id="input-electricityBill"
                           type="number"
@@ -801,7 +804,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Rooftop Solar power share %</label>
+                        <label htmlFor="input-cleanElectricPower" className="block text-xs font-extrabold text-slate-500 mb-1.5">Rooftop Solar power share %</label>
                         <div className="flex items-center gap-2">
                           <input
                             id="input-cleanElectricPower"
@@ -820,7 +823,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Monthly Cooking Gas - LPG/PNG (INR ₹)</label>
+                        <label htmlFor="input-naturalGas" className="block text-xs font-extrabold text-slate-500 mb-1.5">Monthly Cooking Gas - LPG/PNG (INR ₹)</label>
                         <input
                           id="input-naturalGas"
                           type="number"
@@ -833,7 +836,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Air Conditioning & Geyser Usage</label>
+                        <label htmlFor="input-otherHeating" className="block text-xs font-extrabold text-slate-500 mb-1.5">Air Conditioning & Geyser Usage</label>
                         <select
                           id="input-otherHeating"
                           value={baselineInput.otherHeatingSource}
@@ -858,7 +861,7 @@ export default function App() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Primary Diet Preference</label>
+                        <label htmlFor="input-dietPreference" className="block text-xs font-extrabold text-slate-500 mb-1.5">Primary Diet Preference</label>
                         <select
                           id="input-dietPreference"
                           value={baselineInput.dietType}
@@ -874,7 +877,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 mb-1.5">Local Mandi / Sabzi Market Sourcing %</label>
+                        <label htmlFor="input-organicRatio" className="block text-xs font-extrabold text-slate-500 mb-1.5">Local Mandi / Sabzi Market Sourcing %</label>
                         <div className="flex items-center gap-2">
                           <input
                             id="input-organicRatio"
@@ -950,12 +953,14 @@ export default function App() {
               {/* Quick warning indicator on baseline inputs */}
               <div className="mt-8 border-t border-slate-100 pt-5 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <span className="text-[11px] text-slate-500 font-medium flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-emerald-600" />
+                  <AlertCircle className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                   Your total footprint responds in real-time as selectors are modified.
                 </span>
                 <button
+                  type="button"
                   id="btn-re-calc-baseline"
                   onClick={handleFactoryResetState}
+                  aria-label="Reset all carbon measurements and logs"
                   className="text-xs font-extrabold text-red-500 hover:text-red-700 cursor-pointer tracking-wider uppercase border border-red-50 py-1 px-3 rounded-lg hover:bg-red-50/50"
                 >
                   Reset Measurements
@@ -967,7 +972,12 @@ export default function App() {
 
           {/* TAB 2: Daily Green Action Logs */}
           {selectedTab === "logs" && (
-            <div id="stage-logs" className="bg-white rounded-[3rem] p-6 md:p-8 shadow-sm border border-[#e1eded] flex-1 flex flex-col justify-between">
+            <div
+              id="panel-logs"
+              role="tabpanel"
+              aria-labelledby="tab-logs"
+              className="bg-white rounded-[3rem] p-6 md:p-8 shadow-sm border border-[#e1eded] flex-1 flex flex-col justify-between"
+            >
               <div>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
                   <div>
@@ -976,10 +986,13 @@ export default function App() {
                       Log specific eco-actions performed today to subtract kilograms directly from your net footprint.
                     </p>
                   </div>
+                  <label htmlFor="log-date-picker" className="sr-only">Log date</label>
                   <input
+                    id="log-date-picker"
                     type="date"
                     value={activeLogDate}
                     onChange={(e) => setActiveLogDate(e.target.value)}
+                    aria-label="Select log date"
                     className="p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-slate-50 cursor-pointer"
                   />
                 </div>
@@ -1019,19 +1032,21 @@ export default function App() {
                     <form onSubmit={handleCustomSubmit} className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/70 space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-extrabold text-slate-700">Add Custom Action Event</span>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => setShowCustomForm(false)} 
                           className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                          aria-label="Close custom action form"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="sm:col-span-2">
-                          <label className="block text-[10px] font-extrabold text-slate-500 mb-1">What did you do?</label>
+                          <label htmlFor="custom-action-title" className="block text-[10px] font-extrabold text-slate-500 mb-1">What did you do?</label>
                           <input
+                            id="custom-action-title"
                             type="text"
                             placeholder="e.g. Swapped incandescent bulb for LED"
                             value={customActionTitle}
@@ -1042,8 +1057,9 @@ export default function App() {
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-extrabold text-slate-500 mb-1">Impact (kg CO₂e saved)</label>
+                          <label htmlFor="custom-action-impact" className="block text-[10px] font-extrabold text-slate-500 mb-1">Impact (kg CO₂e saved)</label>
                           <input
+                            id="custom-action-impact"
                             type="number"
                             min="0.1"
                             max="100.0"
@@ -1082,7 +1098,7 @@ export default function App() {
                       onClick={() => setShowCustomForm(true)}
                       className="w-full py-2 border border-dashed border-slate-300 rounded-2xl hover:border-emerald-500 text-xs font-bold text-slate-600 hover:text-emerald-700 bg-slate-50/50 hover:bg-white transition cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <Plus className="w-4 h-4" /> Add Custom Activity Log
+                      <Plus className="w-4 h-4" aria-hidden="true" /> Add Custom Activity Log
                     </button>
                   )}
                 </div>
@@ -1118,11 +1134,12 @@ export default function App() {
                                 -{log.impactKg} kg
                               </span>
                               <button
+                                type="button"
                                 onClick={() => handleRemoveLog(log.id)}
                                 className="text-slate-300 hover:text-red-500 p-1 rounded-md transition cursor-pointer"
-                                title="Remove log"
+                                aria-label={`Remove log: ${log.title}`}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                               </button>
                             </div>
                           </div>
@@ -1137,7 +1154,7 @@ export default function App() {
               <div className="mt-6 border-t border-slate-100 pt-5 flex items-center justify-between bg-emerald-50/60 p-4 rounded-2xl">
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
-                    <TrendingDown className="w-5 h-5 text-emerald-700" />
+                    <TrendingDown className="w-5 h-5 text-emerald-700" aria-hidden="true" />
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-emerald-800/80 tracking-wider">Total Avoided Carbon</span>
@@ -1155,7 +1172,12 @@ export default function App() {
 
           {/* TAB 3: AI Action Planner (Real JSON endpoint & Checkbox tasks) */}
           {selectedTab === "planner" && (
-            <div id="stage-planner" className="bg-white rounded-[3rem] p-6 md:p-8 shadow-sm border border-[#e1eded] flex-1 flex flex-col justify-between">
+            <div
+              id="panel-planner"
+              role="tabpanel"
+              aria-labelledby="tab-planner"
+              className="bg-white rounded-[3rem] p-6 md:p-8 shadow-sm border border-[#e1eded] flex-1 flex flex-col justify-between"
+            >
               <div>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                   <div>
@@ -1188,12 +1210,12 @@ export default function App() {
                 {/* Custom Goal Configurator form */}
                 <div className="bg-[#F0F7F4] border border-emerald-100 p-5 rounded-3xl mb-6">
                   <h4 className="text-xs font-extrabold text-emerald-800 uppercase tracking-widest mb-3.5 flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-emerald-600" />
+                    <Award className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                     Set Your Carbon Reduction Goal
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                     <div>
-                      <label className="block text-[10px] font-black text-emerald-900/60 uppercase tracking-widest mb-1.5">
+                      <label htmlFor="goal-percent-select" className="block text-[10px] font-black text-emerald-900/60 uppercase tracking-widest mb-1.5">
                         Target Percentage Reduction
                       </label>
                       <select
@@ -1221,7 +1243,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-emerald-900/60 uppercase tracking-widest mb-1.5">
+                      <label htmlFor="goal-timeframe-select" className="block text-[10px] font-black text-emerald-900/60 uppercase tracking-widest mb-1.5">
                         Timeframe (Months)
                       </label>
                       <select
@@ -1308,6 +1330,7 @@ export default function App() {
                             onChange={() => handleToggleAction(rec.id)}
                             className="w-5 h-5 rounded-md accent-emerald-500 text-white cursor-pointer mt-0.5 shrink-0"
                             id={`check-rec-${rec.id}`}
+                            aria-label={`Mark recommendation complete: ${rec.title}`}
                           />
                           
                           <div className="flex-1 min-w-0">
@@ -1348,7 +1371,7 @@ export default function App() {
 
               <div className="mt-6 border-t border-slate-100 pt-5 flex items-center justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <BookmarkCheck className="w-4 h-4 text-emerald-600" />
+                  <BookmarkCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                   Checking item avoids carbon continuously and gains +200 XP.
                 </span>
                 <span className="font-bold">
@@ -1361,11 +1384,16 @@ export default function App() {
 
           {/* TAB 4: CarbonWise Eco Assist AI Assistant (Persistent chat window) */}
           {selectedTab === "assistant" && (
-            <div id="stage-assistant" className="bg-[#1A2E22] rounded-[3rem] p-6 md:p-8 text-white flex-1 flex flex-col justify-between shadow-xl min-h-[500px]">
+            <div
+              id="panel-assistant"
+              role="tabpanel"
+              aria-labelledby="tab-assistant"
+              className="bg-[#1A2E22] rounded-[3rem] p-6 md:p-8 text-white flex-1 flex flex-col justify-between shadow-xl min-h-[500px]"
+            >
               <div>
                 <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center">
+                    <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center" aria-hidden="true">
                       <Leaf className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -1377,6 +1405,7 @@ export default function App() {
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
                       if (confirm("Reset chat log?")) {
                         setState(prev => ({
@@ -1393,13 +1422,19 @@ export default function App() {
                       }
                     }}
                     className="text-xs font-medium text-emerald-400 hover:text-emerald-200 cursor-pointer p-1"
+                    aria-label="Clear chat history"
                   >
                     Clear Chat
                   </button>
                 </div>
 
                 {/* Dialog Chat messages box */}
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-emerald-800 scrollbar-track-transparent">
+                <div
+                  className="space-y-4 max-h-[300px] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-emerald-800 scrollbar-track-transparent"
+                  role="log"
+                  aria-live="polite"
+                  aria-label="Chat messages"
+                >
                   {chatHistory.map((m) => {
                     const isBot = m.role === "assistant";
                     return (
@@ -1423,8 +1458,8 @@ export default function App() {
                   })}
 
                   {isSendingChat && (
-                    <div className="flex items-center gap-2 text-emerald-300/60 text-xs font-medium italic pl-1">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                    <div className="flex items-center gap-2 text-emerald-300/60 text-xs font-medium italic pl-1" role="status" aria-live="polite">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-500" aria-hidden="true" />
                       CarbonWise is studying parameters...
                     </div>
                   )}
@@ -1441,15 +1476,17 @@ export default function App() {
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Ask standard questions. e.g. How does methane differ from CO2?"
                     disabled={isSendingChat}
+                    aria-label="Message to Eco Assist AI"
                     className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-3.5 pl-4 pr-12 text-xs font-medium text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
                   />
                   
                   <button
                     type="submit"
                     disabled={!chatInput.trim() || isSendingChat}
+                    aria-label="Send message"
                     className="absolute right-2 p-2 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-white rounded-xl transition cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </form>
@@ -1458,6 +1495,7 @@ export default function App() {
 
           {/* TAB 5: Progress tracking, consistency streaks, and medals */}
           {selectedTab === "progress" && (
+            <div id="panel-progress" role="tabpanel" aria-labelledby="tab-progress">
             <ProgressCenter
               state={state}
               dailyLogs={dailyLogs}
@@ -1465,10 +1503,12 @@ export default function App() {
               recommendationsSavingsRate={recommendations.filter((r) => r.completed).reduce((sum, item) => sum + item.annualSavingsKg, 0)}
               computedBadges={computedBadges}
             />
+            </div>
           )}
 
           {/* TAB 6: Collaborative Groups, climate sprints, and global social feed */}
           {selectedTab === "social" && (
+            <div id="panel-social" role="tabpanel" aria-labelledby="tab-social">
             <SocialHub
               state={state}
               onJoinGroup={handleJoinGroup}
@@ -1476,6 +1516,7 @@ export default function App() {
               onCreateGroup={handleCreateGroup}
               totalSavingsFromLogs={totalSavingsFromLogs}
             />
+            </div>
           )}
 
         </section>

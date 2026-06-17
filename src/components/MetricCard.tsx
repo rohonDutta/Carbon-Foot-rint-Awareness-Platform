@@ -27,7 +27,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({ totalKg, onNavigateToCal
 
         <button
           id="btn-recalc"
+          type="button"
           onClick={onNavigateToCalculator}
+          aria-label="Adjust baseline inputs"
           className="px-4 py-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-800 hover:border-slate-600 rounded-lg text-xs font-medium cursor-pointer transition"
         >
           Adjust Inputs
@@ -44,7 +46,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({ totalKg, onNavigateToCal
             </span>
             <span className="text-xs text-slate-400">of average</span>
           </div>
-          <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+          <div
+            className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={Math.min(100, percentOfUS)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`US average comparison: ${percentOfUS}%`}
+          >
             <div
               className={`h-full rounded-full ${percentOfUS <= 100 ? "bg-emerald-500" : "bg-amber-500"}`}
               style={{ width: `${Math.min(100, percentOfUS)}%` }}
@@ -60,7 +69,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({ totalKg, onNavigateToCal
             </span>
             <span className="text-xs text-slate-400">of average</span>
           </div>
-          <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+          <div
+            className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={Math.min(100, percentOfWorld)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`World average comparison: ${percentOfWorld}%`}
+          >
             <div
               className={`h-full rounded-full ${percentOfWorld <= 100 ? "bg-emerald-500" : "bg-amber-500"}`}
               style={{ width: `${Math.min(100, percentOfWorld)}%` }}
@@ -80,7 +96,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({ totalKg, onNavigateToCal
             )}
             <span className="text-xs text-slate-400">remaining to goal</span>
           </div>
-          <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+          <div
+            className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={Math.min(100, (totalKg / CO2_GLOBAL_AVERAGES.sustainable) * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Sustainable ceiling progress: ${Math.min(100, Math.round((totalKg / CO2_GLOBAL_AVERAGES.sustainable) * 100))}%`}
+          >
             <div
               className="h-full rounded-full bg-indigo-500"
               style={{ width: `${Math.min(100, (totalKg / CO2_GLOBAL_AVERAGES.sustainable) * 100)}%` }}

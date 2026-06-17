@@ -97,15 +97,15 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
     const sizeCls = "w-6 h-6 stroke-[2.2]";
     switch(iconName) {
       case "Utensils":
-        return <Utensils className={`${sizeCls} ${active ? "text-amber-500" : "text-slate-400"}`} />;
+        return <Utensils className={`${sizeCls} ${active ? "text-amber-500" : "text-slate-400"}`} aria-hidden="true" />;
       case "Car":
-        return <Car className={`${sizeCls} ${active ? "text-emerald-500" : "text-slate-400"}`} />;
+        return <Car className={`${sizeCls} ${active ? "text-emerald-500" : "text-slate-400"}`} aria-hidden="true" />;
       case "Zap":
-        return <Zap className={`${sizeCls} ${active ? "text-blue-500" : "text-slate-400"}`} />;
+        return <Zap className={`${sizeCls} ${active ? "text-blue-500" : "text-slate-400"}`} aria-hidden="true" />;
       case "Trash2":
-        return <Trash2 className={`${sizeCls} ${active ? "text-indigo-500" : "text-slate-400"}`} />;
+        return <Trash2 className={`${sizeCls} ${active ? "text-indigo-500" : "text-slate-400"}`} aria-hidden="true" />;
       default:
-        return <Trophy className={`${sizeCls} ${active ? "text-amber-400" : "text-slate-400"}`} />;
+        return <Trophy className={`${sizeCls} ${active ? "text-amber-400" : "text-slate-400"}`} aria-hidden="true" />;
     }
   };
 
@@ -144,9 +144,11 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
 
             {/* SVG Interactive Line Chart */}
             <div className="relative overflow-visible my-2">
-              <svg 
-                viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
+              <svg
+                viewBox={`0 0 ${chartWidth} ${chartHeight}`}
                 className="w-full h-auto overflow-visible"
+                role="img"
+                aria-label="Monthly carbon footprint trend chart comparing baseline and actual emissions from January to June"
               >
                 <defs>
                   <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
@@ -330,7 +332,7 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
             </div>
 
             <div className="text-center py-6">
-              <span className="text-6xl font-black tracking-tighter text-amber-300 font-mono" id="current-streak-val">
+              <span className="text-6xl font-black tracking-tighter text-amber-300 font-mono" id="current-streak-val" aria-label={`Current streak: ${streakState.currentStreakCount} days`}>
                 {streakState.currentStreakCount}
               </span>
               <p className="text-xs uppercase font-extrabold tracking-widest text-emerald-300 mt-2">Consecutive Days Active</p>

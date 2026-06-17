@@ -242,8 +242,9 @@ export const SocialHub: React.FC<SocialHubProps> = ({
               <button
                 onClick={() => setShowCreateGroupModal(true)}
                 className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl cursor-pointer transition flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wide shrink-0"
+                aria-label="Create new climate reduction group"
               >
-                <Plus className="w-3.5 h-3.5" /> Create
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Create
               </button>
             </div>
 
@@ -312,6 +313,9 @@ export const SocialHub: React.FC<SocialHubProps> = ({
               </span>
               <button
                 onClick={() => setAllowSharing(!allowSharing)}
+                role="switch"
+                aria-checked={allowSharing}
+                aria-label="Allow progress sharing to community feed"
                 className={`w-9 h-5 rounded-full p-0.5 transition cursor-pointer flex ${allowSharing ? "bg-emerald-500 justify-end" : "bg-slate-300 justify-start"}`}
               >
                 <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
@@ -335,10 +339,11 @@ export const SocialHub: React.FC<SocialHubProps> = ({
           </div>
 
           <form onSubmit={handleCreatePostSubmit} className="space-y-2">
-            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mt-1">
+            <label htmlFor="eco-post-text" className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mt-1">
               Construct Eco Post
             </label>
             <textarea
+              id="eco-post-text"
               placeholder="e.g. Swapping out standard lightbulbs for full high efficiency LEDs! Saves 150W of power instantly."
               value={customPostText}
               onChange={(e) => setCustomPostText(e.target.value)}
@@ -392,6 +397,7 @@ export const SocialHub: React.FC<SocialHubProps> = ({
                     <button 
                       onClick={() => handleLikePost(post.id)}
                       className="hover:text-emerald-600 cursor-pointer transition flex items-center gap-1.5"
+                      aria-label={`Like post by ${post.author}, currently ${post.likes} likes`}
                     >
                       ❤️ <span className="font-mono">{post.likes}</span>
                     </button>
@@ -409,16 +415,23 @@ export const SocialHub: React.FC<SocialHubProps> = ({
 
       {/* CREATE CUSTOM REDUCTION FOCUS GROUP MODAL */}
       {showCreateGroupModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-[3.5rem] p-6 md:p-8 w-full max-w-sm shadow-2xl relative border border-slate-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50" role="presentation">
+          <div
+            className="bg-white rounded-[3.5rem] p-6 md:p-8 w-full max-w-sm shadow-2xl relative border border-slate-100"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-group-title"
+          >
             <button 
+              type="button"
               onClick={() => setShowCreateGroupModal(false)}
               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-800 cursor-pointer"
+              aria-label="Close create group dialog"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
 
-            <h3 className="text-xl font-black text-slate-900 leading-tight mb-2">
+            <h3 id="create-group-title" className="text-xl font-black text-slate-900 leading-tight mb-2">
               Start Custom Eco Group
             </h3>
             <p className="text-xs text-slate-400 leading-normal mb-4 font-semibold">
@@ -427,10 +440,11 @@ export const SocialHub: React.FC<SocialHubProps> = ({
 
             <form onSubmit={handleGroupCreateSubmit} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+                <label htmlFor="new-group-name" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                   Community Group Name
                 </label>
                 <input
+                  id="new-group-name"
                   type="text"
                   placeholder="e.g. Zero Waste Warriors New York"
                   value={newGroupName}
@@ -441,10 +455,11 @@ export const SocialHub: React.FC<SocialHubProps> = ({
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+                <label htmlFor="new-group-category" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                   Target Focus Category
                 </label>
                 <select
+                  id="new-group-category"
                   value={newGroupCat}
                   onChange={(e) => setNewGroupCat(e.target.value as any)}
                   className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs font-bold text-slate-800"
@@ -458,10 +473,11 @@ export const SocialHub: React.FC<SocialHubProps> = ({
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+                <label htmlFor="new-group-desc" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                   Purpose / Guideline Description
                 </label>
                 <textarea
+                  id="new-group-desc"
                   placeholder="e.g. Banding together locally to reduce emissions..."
                   value={newGroupDesc}
                   onChange={(e) => setNewGroupDesc(e.target.value)}

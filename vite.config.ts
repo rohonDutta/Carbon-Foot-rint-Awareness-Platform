@@ -5,6 +5,15 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.ts',
+      pool: 'forks',
+      fileParallelism: false,
+      testTimeout: 30000,
+      hookTimeout: 30000,
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
