@@ -1,17 +1,12 @@
 import React, { useState } from "react";
-import { AppState, CommunityGroup, CommunityChallenge, CarbonCategory } from "../types";
+import { AppState, CarbonCategory } from "../types";
 import { 
-  Users, 
   Share2, 
   Plus, 
   TrendingDown, 
-  CheckCircle, 
   Check, 
-  MessageSquare, 
-  ArrowRight,
   Send,
   X,
-  Sparkles,
   Info
 } from "lucide-react";
 
@@ -185,6 +180,7 @@ export const SocialHub: React.FC<SocialHubProps> = ({
                       </div>
                       <button
                         onClick={() => onJoinChallenge(c.id)}
+                        aria-label={c.joined ? `Leave challenge: ${c.title}` : `Join challenge: ${c.title}`}
                         className={`text-[10px] font-extrabold py-1.5 px-3 rounded-full cursor-pointer transition whitespace-nowrap ${c.joined ? "bg-emerald-100 text-emerald-800 font-bold" : "bg-slate-900 text-white hover:bg-slate-800"}`}
                       >
                         {c.joined ? (
@@ -198,7 +194,14 @@ export const SocialHub: React.FC<SocialHubProps> = ({
                         <span>Progress: {c.progressKg.toFixed(0)} / {c.goalKg} kg CO₂ saved</span>
                         <span>{percent}%</span>
                       </div>
-                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="w-full bg-slate-200 h-2 rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={percent}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Challenge progress: ${percent}%`}
+                      >
                         <div 
                           className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
                           style={{ width: `${percent}%` }}
@@ -264,6 +267,7 @@ export const SocialHub: React.FC<SocialHubProps> = ({
                       </div>
                       <button
                         onClick={() => onJoinGroup(g.id)}
+                        aria-label={g.joined ? `Leave group: ${g.name}` : `Join group: ${g.name}`}
                         className={`text-[10px] font-extrabold py-1.5 px-3 rounded-full cursor-pointer transition whitespace-nowrap ${g.joined ? "bg-emerald-100 text-emerald-800 font-bold" : "bg-slate-900 text-white hover:bg-slate-800"}`}
                       >
                         {g.joined ? (
@@ -461,7 +465,7 @@ export const SocialHub: React.FC<SocialHubProps> = ({
                 <select
                   id="new-group-category"
                   value={newGroupCat}
-                  onChange={(e) => setNewGroupCat(e.target.value as any)}
+                  onChange={(e) => setNewGroupCat(e.target.value as CarbonCategory | "all")}
                   className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs font-bold text-slate-800"
                 >
                   <option value="all">All Category Actions</option>

@@ -88,7 +88,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({ totalKg, onNavigateToCal
           <span className="text-slate-500 text-xs font-medium">Sustainable Ceiling (2.0t)</span>
           <div className="flex items-baseline gap-2 mt-1">
             {meetsSustainable ? (
-              <span className="text-xl font-semibold font-mono text-emerald-400">Achieved 🎉</span>
+              <span className="text-xl font-semibold font-mono text-emerald-400">
+                Achieved <span aria-label="celebration" role="img">🎉</span>
+              </span>
             ) : (
               <span className="text-xl font-semibold font-mono text-slate-300">
                 +{(totalKg / 1000 - 2.0).toFixed(1)}t

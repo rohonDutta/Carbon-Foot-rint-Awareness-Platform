@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getInitialState, saveState } from "./storage";
 import { calculateBaseline } from "./carbonCalculations";
 
@@ -72,6 +72,41 @@ describe("storage", () => {
     const state = getInitialState();
 
     expect(state.baselineInput.vehicleType).toBe("gas_small");
+    expect(state.selectedTab).toBe("calculator");
+  });
+
+  it("saveState silently handles QuotaExceededError without throwing", () => {
+    // Simulate storage full
+    vi.spyOn(localStorage, "setItem").mockImplementationOnce(() => {
+      throw new DOMException("QuotaExceededError");
+    });
+
+    const state = getInitialState();
+    // Should not throw
+    expect(() => saveState(state)).not.toThrow();
+
+    vi.restoreAllMocks();
+  });
+
+  it("returns valid selectedTab when stored value is an unrecognized tab", () => {
+    const corrupt = {
+      baselineInput: getInitialState().baselineInput,
+      baselineResult: getInitialState().baselineResult,
+      dailyLogs: [],
+      recommendations: [],
+      chatHistory: [],
+      lastPlanGeneratedAt: null,
+      personalizedInsight: null,
+      selectedTab: "unknown_tab_xyz",
+      badges: [],
+      groups: [],
+      challenges: [],
+      streakState: { currentStreakCount: 0, longestStreakCount: 0, lastActiveDate: null },
+      reductionGoal: { percentTarget: 10, timeframeMonths: 3, startDate: "2026-01-01", isCustom: false },
+    };
+    localStorage.setItem("carbonwise_tracker_state", JSON.stringify(corrupt));
+    const state = getInitialState();
+    // Should fall back to "calculator" for unrecognized tab
     expect(state.selectedTab).toBe("calculator");
   });
 });

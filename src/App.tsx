@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getInitialState, saveState } from "./utils/storage";
-import { calculateBaseline, PRESET_DAILY_ACTIONS, CO2_GLOBAL_AVERAGES, PresetAction } from "./utils/carbonCalculations";
+import { calculateBaseline, PRESET_DAILY_ACTIONS, CO2_GLOBAL_AVERAGES } from "./utils/carbonCalculations";
 import { calculateUpdatedStreak } from "./utils/streak";
-import { AppState, BaselineInput, DailyLogItem, RecommendationItem, ChatMessage, CarbonCategory } from "./types";
+import { AppState, BaselineInput, DailyLogItem, ChatMessage, CarbonCategory } from "./types";
 import { 
   Leaf, 
   Car, 
   Flame, 
   Utensils, 
   Trash2, 
-  Compass, 
   Plus, 
   MessageSquare, 
   Send, 
   BookmarkCheck, 
-  Info, 
   X, 
   TrendingDown, 
   Trophy, 
@@ -22,11 +20,7 @@ import {
   RefreshCw,
   AlertCircle,
   Users,
-  Share2,
   Award,
-  Calendar,
-  Lock,
-  CheckCircle,
   Sparkles
 } from "lucide-react";
 import { ProgressCenter } from "./components/ProgressCenter";
@@ -121,7 +115,7 @@ export default function App() {
   };
 
   // Dynamic badge evaluation selector
-  const computedBadges = useMemo(() => {
+  const computedBadges: Badge[] = useMemo(() => {
     const logs = state.dailyLogs || [];
     const counts = {
       diet: logs.filter((l) => l.category === "diet").length,
@@ -155,13 +149,6 @@ export default function App() {
   const totalSavingsFromLogs = useMemo(() => {
     return dailyLogs.reduce((sum, item) => sum + item.impactKg, 0);
   }, [dailyLogs]);
-
-  // Total recommendations savings checked off
-  const recommendationsSavings = useMemo(() => {
-    return recommendations
-      .filter((r) => r.completed)
-      .reduce((sum, item) => sum + (item.annualSavingsKg / 365), 0); // Convert annual estimate to a daily rate
-  }, [recommendations]);
 
   // Score & points setup for gamification
   const totalUserPoints = useMemo(() => {
@@ -714,7 +701,7 @@ export default function App() {
                         <select
                           id="input-vehicleType"
                           value={baselineInput.vehicleType}
-                          onChange={(e) => handleInputChange("vehicleType", e.target.value as any)}
+                          onChange={(e) => handleInputChange("vehicleType", e.target.value as BaselineInput["vehicleType"])}
                           className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 text-sm font-bold text-slate-800"
                         >
                           <option value="none">No Private Vehicle (Walk/Cycle)</option>
@@ -840,7 +827,7 @@ export default function App() {
                         <select
                           id="input-otherHeating"
                           value={baselineInput.otherHeatingSource}
-                          onChange={(e) => handleInputChange("otherHeatingSource", e.target.value as any)}
+                          onChange={(e) => handleInputChange("otherHeatingSource", e.target.value as BaselineInput["otherHeatingSource"])}
                           className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 text-sm font-bold text-slate-800"
                         >
                           <option value="none">None / Ceiling Fans Only</option>
@@ -865,7 +852,7 @@ export default function App() {
                         <select
                           id="input-dietPreference"
                           value={baselineInput.dietType}
-                          onChange={(e) => handleInputChange("dietType", e.target.value as any)}
+                          onChange={(e) => handleInputChange("dietType", e.target.value as BaselineInput["dietType"])}
                           className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 text-sm font-bold text-slate-800"
                         >
                           <option value="vegan">100% Vegan (No Curd, Ghee, Paneer, or Meat)</option>
@@ -1183,7 +1170,7 @@ export default function App() {
                   <div>
                     <h3 className="text-2xl font-black text-slate-900 leading-tight">AI Personalized Action Planner</h3>
                     <p className="text-xs font-semibold text-slate-500 mt-1">
-                      Leverage Gemini 3.5 Flash to automatically crawl your baseline indicators and generate a target-saving dynamic road map.
+                      Leverage Gemini 2.0 Flash to automatically crawl your baseline indicators and generate a target-saving dynamic road map.
                     </p>
                   </div>
                   
@@ -1400,7 +1387,7 @@ export default function App() {
                       <h3 className="font-extrabold text-white text-base leading-tight">Eco Assist Expert</h3>
                       <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold uppercase">
                         <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-                        Gemini 3.5 Active
+                        Gemini 2.0 Active
                       </span>
                     </div>
                   </div>
@@ -1498,7 +1485,6 @@ export default function App() {
             <div id="panel-progress" role="tabpanel" aria-labelledby="tab-progress">
             <ProgressCenter
               state={state}
-              dailyLogs={dailyLogs}
               totalSavingsFromLogs={totalSavingsFromLogs}
               recommendationsSavingsRate={recommendations.filter((r) => r.completed).reduce((sum, item) => sum + item.annualSavingsKg, 0)}
               computedBadges={computedBadges}
@@ -1525,7 +1511,7 @@ export default function App() {
 
       {/* 3. Footer info section */}
       <footer className="max-w-7xl mx-auto w-full text-center mt-8 pt-6 border-t border-[#e1eded]/60 block text-emerald-950/40 text-[10px] font-extrabold uppercase tracking-widest">
-        <span>© 2026 CO₂-ZERO ENVIRONMENT PROJECT • POWERED BY GEMINI 3.5 FLASH • DURABLE STATE REGISTERED</span>
+        <span>© 2026 CO₂-ZERO ENVIRONMENT PROJECT • POWERED BY GEMINI 2.0 FLASH • DURABLE STATE REGISTERED</span>
       </footer>
 
     </div>

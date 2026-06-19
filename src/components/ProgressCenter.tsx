@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { AppState, Badge, StreakState } from "../types";
+import { AppState, Badge } from "../types";
 import { 
   Trophy, 
-  Calendar, 
   Award, 
   Zap, 
   Flame, 
@@ -12,13 +11,11 @@ import {
   Lock, 
   CheckCircle, 
   TrendingDown, 
-  Sparkles,
-  Info
+  Sparkles
 } from "lucide-react";
 
 interface ProgressCenterProps {
   state: AppState;
-  dailyLogs: any[];
   totalSavingsFromLogs: number;
   recommendationsSavingsRate: number; // in kg/yr
   computedBadges: Badge[];
@@ -26,7 +23,6 @@ interface ProgressCenterProps {
 
 export const ProgressCenter: React.FC<ProgressCenterProps> = ({ 
   state, 
-  dailyLogs, 
   totalSavingsFromLogs, 
   recommendationsSavingsRate,
   computedBadges
@@ -44,7 +40,6 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
 
   const monthlyFootprintData = useMemo(() => {
     const monthlyBaseline = state.baselineResult.total / 12;
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     
     // Seed average reductions for prior months to show a beautiful descending visual curve
     return [

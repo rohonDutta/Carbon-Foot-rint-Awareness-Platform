@@ -1,4 +1,4 @@
-import { AppState, BaselineInput, BaselineResult } from "../types";
+import { AppState, BaselineInput } from "../types";
 import { calculateBaseline } from "./carbonCalculations";
 
 const STORAGE_KEY = "carbonwise_tracker_state";
@@ -236,6 +236,14 @@ const DEFAULT_STREAK = {
   lastActiveDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] // Yesterday
 };
 
+/**
+ * Retrieves the application state from localStorage, migrating legacy structures
+ * that pre-date the addition of newer fields (badges, groups, challenges, etc.).
+ * Falls back to the seeded default state if nothing is stored or the stored JSON
+ * is invalid.
+ *
+ * @returns A fully populated {@link AppState} ready for use as React initial state.
+ */
 export function getInitialState(): AppState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -276,6 +284,13 @@ export function getInitialState(): AppState {
   };
 }
 
+/**
+ * Persists the current application state to localStorage.
+ * Silently absorbs {@link DOMException} errors caused by storage-quota exhaustion
+ * so that UI interactions are never blocked by a failed write.
+ *
+ * @param state - The full application state to serialise and store.
+ */
 export function saveState(state: AppState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));

@@ -113,6 +113,23 @@ describe("calculateBaseline", () => {
 
     expect(withFlights.transportation).toBeGreaterThan(noFlights.transportation);
   });
+
+  it("handles 100% organicFraction without producing negative diet emissions", () => {
+    const result = calculateBaseline({ ...baseInput, organicFraction: 100 });
+    expect(result.diet).toBeGreaterThan(0);
+  });
+
+  it("handles electric vehicle with zero driving (no transport emissions)", () => {
+    const result = calculateBaseline({
+      ...baseInput,
+      vehicleType: "electric",
+      vehicleAnnualMiles: 0,
+      publicTransitWeeklyMiles: 0,
+      shorthaulFlightsYear: 0,
+      longhaulFlightsYear: 0,
+    });
+    expect(result.transportation).toBe(0);
+  });
 });
 
 describe("PRESET_DAILY_ACTIONS", () => {
